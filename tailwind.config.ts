@@ -13,6 +13,14 @@ const config: Config = {
         "gradient-conic":
           "conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))",
       },
+      colors: {
+        "brand-green": "rgb(var(--brand-green) / <alpha-value>)",
+        "brand-gold": "rgb(var(--brand-gold) / <alpha-value>)",
+      },
+      borderRadius: {
+        xl: "0.75rem",
+        "2xl": "1rem",
+      },
     },
   },
   plugins: [],
