@@ -6,31 +6,32 @@ import { MagnifyingGlassIcon, XMarkIcon } from "@heroicons/react/16/solid";
 
 export default function Home() {
 	// update state defs with new type
-	const [advocates, setAdvocates] = useState<Advocate[]>([]);
 	const [filteredAdvocates, setFilteredAdvocates] = useState<Advocate[]>([]);
 	const [searchTerm, setSearchTerm] = useState("");
-	const [loading, setLoading] = useState(false);
+	const [loading, setLoading] = useState(true);
 
 	useEffect(() => {
 		const ctrl = new AbortController();
 		const timer = setTimeout(async () => {
-      try {
-        const params = new URLSearchParams({
-          q: searchTerm,
-          limit: "25",
-          offset: "0",
-        });
-        const res = await fetch(`/api/advocates?${params}`, {
-          signal: ctrl.signal,
-        });
-        if (!res.ok) throw new Error(`Http ${res.status}`);
-        const json = await res.json();
-        setFilteredAdvocates(json.data);
-      } catch(err: any) {
-        if (err?.name !== "AbortError") console.error('Fetch advocates failed:', err) 
-      }
-
-
+			setLoading(true);
+			try {
+				const params = new URLSearchParams({
+					q: searchTerm,
+					limit: "25",
+					offset: "0",
+				});
+				const res = await fetch(`/api/advocates?${params}`, {
+					signal: ctrl.signal,
+				});
+				if (!res.ok) throw new Error(`Http ${res.status}`);
+				const json = await res.json();
+				setFilteredAdvocates(json.data);
+			} catch (err: any) {
+				if (err?.name !== "AbortError")
+					console.error("Fetch advocates failed:", err);
+			} finally {
+				setLoading(false);
+			}
 		}, 250); // debounce
 		return () => {
 			ctrl.abort();
@@ -60,26 +61,29 @@ export default function Home() {
 							}}
 							placeholder="Search advocates…"
 							className="search-input"
+							aria-controls="advocates-table"
+            				aria-describedby="results-summary"
 						/>
 
 						{/* Left: search icon */}
 						<MagnifyingGlassIcon className="search-icon"></MagnifyingGlassIcon>
 
 						{/* Clear button */}
-            {searchTerm && (
-              <button
-                type="button"
-                aria-label="Clear search"
-                onClick={() => setSearchTerm("")}
-                className="clear-button"
-              >
-                <XMarkIcon className="h-5 w-5 text-slate-600" />
-              </button>
-            )}
+						{searchTerm && (
+							<button
+								type="button"
+								aria-label="Clear search"
+								onClick={() => setSearchTerm("")}
+								className="clear-button"
+							>
+								<XMarkIcon className="h-5 w-5 text-slate-600" />
+							</button>
+						)}
 					</div>
 				</div>
 				<br />
 				<table className="table-base">
+					<caption className="sr-only">Directory of Solace advocates</caption>
 					<thead className="table-head">
 						{/* fix the hydration error where th cannot be a child of thead by adding in a tr */}
 						<tr>
@@ -107,44 +111,69 @@ export default function Home() {
 						</tr>
 					</thead>
 					<tbody className="divide-y divide-slate-200">
-						{filteredAdvocates.map((advocate, i) => {
-							return (
-								<tr key={i} className="tr-hover">
-									<td className="td-base">
-										{advocate.firstName}
-									</td>
-									<td className="td-base">
-										{advocate.lastName}
-									</td>
-									<td className="td-base">
-										{advocate.city}
-									</td>
-									<td className="td-base">
-										{advocate.degree}
-									</td>
-									<td className="td-base">
-										<div className="flex flex-wrap gap-1">
-											{advocate.specialties.sort().map((s) => (
-												<span
-													key={s}
-													className="badge badge-gold"
-												>
-													{s}
-												</span>
-											))}
-										</div>
-									</td>
-									<td className="td-base">
-										{advocate.yearsOfExperience}
-									</td>
-									<td className="td-base">
-										{advocate.phoneNumber}
-									</td>
-								</tr>
-							);
-						})}
+						{filteredAdvocates.length === 0 && !loading ? (
+							<tr>
+								<td
+									colSpan={7}
+									className="td-base text-center text-slate-600"
+								>
+									No advocates found
+								</td>
+							</tr>
+						) : (
+							filteredAdvocates.map((advocate, i) => {
+								return (
+									<tr key={i} className="tr-hover">
+										<td className="td-base">
+											{advocate.firstName}
+										</td>
+										<td className="td-base">
+											{advocate.lastName}
+										</td>
+										<td className="td-base">
+											{advocate.city}
+										</td>
+										<td className="td-base">
+											{advocate.degree}
+										</td>
+										<td className="td-base">
+											<div className="flex flex-wrap gap-1">
+												{advocate.specialties
+													.sort()
+													.map((s) => (
+														<span
+															key={s}
+															className="badge badge-gold"
+														>
+															{s}
+														</span>
+													))}
+											</div>
+										</td>
+										<td className="td-base">
+											{advocate.yearsOfExperience}
+										</td>
+										<td className="td-base">
+											{advocate.phoneNumber}
+										</td>
+									</tr>
+								);
+							})
+						)}
 					</tbody>
 				</table>
+				{loading && (
+					<div
+						id="loading"
+						className="inset-0 flex items-center justify-center"
+					>
+						<div className="dot"></div>
+						<div className="dot"></div>
+						<div className="dot"></div>
+						<div className="dot"></div>
+						<div className="dot"></div>
+					</div>
+				)}
 			</div>
 		</main>
 	);
