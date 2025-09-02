@@ -10,17 +10,19 @@ export default function Home() {
   const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
-    console.log("fetching advocates...");
-    fetch("/api/advocates").then((response) => {
-      if (!response.ok) throw new Error(`Failed to fetch: ${response.status}`);
-      return response.json();
-    })
-    .then((jsonResponse) => {
-      setAdvocates(jsonResponse.data);
-      setFilteredAdvocates(jsonResponse.data);
-    })
-    .catch(err => console.error("Error loading advocates:", err))
-  }, []);
+    const ctrl = new AbortController();
+    const t = setTimeout(async () => {
+      const params = new URLSearchParams({
+        q: searchTerm,
+        limit: "25",
+        offset: "0",
+      });
+      const res = await fetch(`/api/advocates?${params}`, { signal: ctrl.signal });
+      const json = await res.json();
+      setFilteredAdvocates(json.data);
+    }, 250); // debounce
+    return () => { ctrl.abort(); clearTimeout(t); };
+  }, [searchTerm]);
 
   const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const term = e.target.value.toLowerCase();
@@ -56,7 +58,7 @@ export default function Home() {
         <p>
           Searching for: <span id="search-term">{searchTerm}</span>
         </p>
-        <input style={{ border: "1px solid black" }} onChange={onChange} />
+        <input style={{ border: "1px solid black" }}  onChange={(e) => setSearchTerm(e.target.value)} />
         <button onClick={onClick}>Reset Search</button>
       </div>
       <br />
