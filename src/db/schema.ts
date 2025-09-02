@@ -1,4 +1,4 @@
-import { sql } from "drizzle-orm";
+import { InferSelectModel, sql } from "drizzle-orm";
 import {
   pgTable,
   integer,
@@ -20,5 +20,10 @@ const advocates = pgTable("advocates", {
   phoneNumber: bigint("phone_number", { mode: "number" }).notNull(),
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
 });
+
+// create the type so we can use it
+export type Advocate = Omit<InferSelectModel<typeof advocates>, "specialties"> & {
+  specialties: string[];
+}
 
 export { advocates };
